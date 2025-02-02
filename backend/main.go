@@ -2,11 +2,15 @@ package main
 
 import (
 	"database/sql"
+	"errors"
 	"flag"
 	"log"
+	"net/http"
 
+	"github.com/labstack/echo-contrib/echoprometheus"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+
 	_ "github.com/lib/pq"
 
 	"github.com/tvgelderen/fiscora/auth"
@@ -40,6 +44,16 @@ func main() {
 	handler := handlers.NewAPIHandler(conn, authService)
 
 	e := echo.New()
+
+	e.Use(echoprometheus.NewMiddleware("fiscora"))
+
+	go func() {
+		metrics := echo.New()
+		metrics.GET("/metrics", echoprometheus.NewHandler())
+		if err := metrics.Start(env.PrometheusPort); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			log.Fatal(err)
+		}
+	}()
 
 	e.Use(middleware.CORSWithConfig(middleware.DefaultCORSConfig))
 	e.Use(middleware.Logger())

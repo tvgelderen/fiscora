@@ -15,27 +15,30 @@ import (
 var userId uuid.UUID
 
 func Seed(conn *sql.DB) {
+	log.Info("Seeding repository.")
+
 	userRepository := repository.CreateUserRepository(conn)
 	transactionRepository := repository.CreateTransactionRepository(conn)
 	budgetRepository := repository.CreateBudgetRepository(conn)
 
-	log.Info("Seeding repository.")
-
 	userId, _ = uuid.NewUUID()
 
+	log.Info("Creating demo user.")
 	createDemoUser(userRepository)
 
+	log.Info("Creating demo user transactions.")
 	createTransactions(transactionRepository)
 
+	log.Info("Creating demo user budgets.")
 	createBudgets(budgetRepository)
 }
 
 func SeedMyAccount(conn *sql.DB) {
+	log.Info("Seeding repository.")
+
 	userRepository := repository.CreateUserRepository(conn)
 	transactionRepository := repository.CreateTransactionRepository(conn)
 	budgetRepository := repository.CreateBudgetRepository(conn)
-
-	log.Info("Seeding repository.")
 
 	user, err := userRepository.GetByEmail(context.Background(), "thvangelderen@gmail.com")
 	if err != nil {
@@ -44,8 +47,10 @@ func SeedMyAccount(conn *sql.DB) {
 
 	userId = user.ID
 
+	log.Info("Creating transactions.")
 	createTransactions(transactionRepository)
 
+	log.Info("Creating bugets.")
 	createBudgets(budgetRepository)
 }
 

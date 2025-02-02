@@ -125,7 +125,7 @@
 </div>
 
 {#if budgets.length === 0}
-	<p class="text-center">You haven't set any budgets yet. Create one to get started!</p>
+	<p class="text-center text-muted-foreground">You haven't set any budgets yet. Create one to get started!</p>
 {/if}
 
 <AlertDialog.Root open={budgetToDelete !== null}>

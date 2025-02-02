@@ -31,7 +31,7 @@
 			allows for collaboration but also ensures that users can see exactly
 			how their data is being handled. If you're interested in exploring
 			the code or contributing to the project, you can find the repository
-			on <a target="_blank" href="https://github.com/TvGelderen/fiscora">
+			on <a target="_blank" href="https://github.com/tvgelderen/fiscora">
 				GitHub
 			</a>
 			.

@@ -11,6 +11,7 @@ type Environment struct {
 	Production         bool
 	PublicHost         string
 	Port               string
+	PrometheusPort     string
 	FrontendUrl        string
 	DBConnectionString string
 	SessionSecret      string
@@ -33,6 +34,7 @@ func getEnvironment() Environment {
 	return Environment{
 		Production:         getBoolEnv("PRODUCTION", false),
 		Port:               getEnv("PORT", ":8080"),
+		PrometheusPort:     getEnv("PROMETHEUS_PORT", ":8081"),
 		FrontendUrl:        getEnv("FRONTEND_URL", "http://localhost:5173"),
 		DBConnectionString: getEnv("DB_CONNECTION_STRING", ""),
 		SessionSecret:      getEnv("SESSION_SECRET", ""),

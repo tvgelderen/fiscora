@@ -187,7 +187,7 @@ button[data-dialog-close] {
 }
 
 button[data-dialog-close]>svg {
-    @apply h-6 w-6;
+    @apply h-5 w-5;
 }
 
 div[role="dialog"],
@@ -263,4 +263,8 @@ select.error,
 button.error,
 div.radio-group.error {
     @apply !border-destructive;
+}
+
+button:disabled {
+    @apply cursor-not-allowed;
 }

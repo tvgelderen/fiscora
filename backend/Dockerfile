@@ -1,5 +1,5 @@
 # Build
-FROM golang:1.22.6-alpine AS builder
+FROM golang:1.23.5-alpine AS builder
 WORKDIR /app
 COPY . .
 RUN go get
