@@ -3,12 +3,10 @@ package main
 import (
 	"database/sql"
 	"errors"
-	"flag"
 	"fmt"
 	"log"
 	"log/slog"
 	"net/http"
-	"os"
 
 	"github.com/labstack/echo-contrib/echoprometheus"
 	"github.com/labstack/echo/v4"
@@ -18,7 +16,7 @@ import (
 
 	"github.com/tvgelderen/fiscora/auth"
 	"github.com/tvgelderen/fiscora/config"
-	"github.com/tvgelderen/fiscora/handlers"
+	"github.com/tvgelderen/fiscora/handler"
 	"github.com/tvgelderen/fiscora/logging"
 	"github.com/tvgelderen/fiscora/seed"
 )
@@ -41,24 +39,16 @@ func main() {
 		log.Fatalf("Error establishing database connection: %s", err.Error())
 	}
 
-	seedFlag := flag.Bool("seed", false, "Set to true to seed the demo account")
-	seedMyAccountFlag := flag.Bool("seed-me", false, "Set to true to seed my account too")
-	flag.Parse()
-	if *seedFlag {
-		seed.Seed(conn)
-	}
-	if *seedMyAccountFlag {
-		seed.SeedMyAccount(conn)
-	}
+	seed.CheckSeed(conn)
 
 	authService := auth.NewAuthService()
-	handler := handlers.NewHandler(conn, authService)
+	h := handler.NewHandler(conn, authService)
 
 	e := echo.New()
 
 	e.Use(middleware.CORSWithConfig(middleware.DefaultCORSConfig))
 
-	e.Use(handlers.AttachLogger)
+	e.Use(handler.AttachLogger)
 	e.Use(middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
 		LogStatus:   true,
 		LogURI:      true,
@@ -67,7 +57,7 @@ func main() {
 		LogValuesFunc: func(c echo.Context, v middleware.RequestLoggerValues) error {
 			if v.Error == nil {
 				logger.LogAttrs(c.Request().Context(), slog.LevelInfo, "SUCCESS",
-					slog.String("request_id", c.Get(handlers.RequestIdCtxKey).(string)),
+					slog.String("request_id", c.Get(handler.RequestIdCtxKey).(string)),
 					slog.String("method", v.Method),
 					slog.String("uri", v.URI),
 					slog.Int("status", v.Status),
@@ -75,12 +65,12 @@ func main() {
 				)
 			} else {
 				logger.LogAttrs(c.Request().Context(), slog.LevelError, "ERROR",
-					slog.String("request_id", c.Get(handlers.RequestIdCtxKey).(string)),
+					slog.String("request_id", c.Get(handler.RequestIdCtxKey).(string)),
 					slog.String("remote_ip", v.RemoteIP),
 					slog.String("method", v.Method),
 					slog.String("uri", v.URI),
 					slog.Int("status", v.Status),
-					slog.String("err", v.Error.Error()),
+					slog.String("error", v.Error.Error()),
 				)
 			}
 			return nil
@@ -93,43 +83,42 @@ func main() {
 		metrics := echo.New()
 		metrics.GET("/metrics", echoprometheus.NewHandler())
 		if err := metrics.Start(env.PrometheusPort); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			slog.Error(err.Error())
-			os.Exit(1)
+			log.Fatal(err.Error())
 		}
 	}()
 
-	base := e.Group("/api")
-	base.GET("/auth/demo", handler.HandleDemoLogin)
-	base.GET("/auth/:provider", handler.HandleOAuthLogin)
-	base.GET("/auth/callback/:provider", handler.HandleOAuthCallback)
-	base.GET("/auth/logout", handler.HandleLogout, handler.AuthorizeEndpoint)
+	base := e.Group("/_api")
+	base.GET("/auth/demo", h.HandleDemoLogin)
+	base.GET("/auth/:provider", h.HandleOAuthLogin)
+	base.GET("/auth/callback/:provider", h.HandleOAuthCallback)
+	base.GET("/auth/logout", h.HandleLogout, h.AuthorizeEndpoint)
 
-	users := base.Group("/users", handler.AuthorizeEndpoint)
-	users.GET("/me", handler.HandleGetMe)
+	users := base.Group("/users", h.AuthorizeEndpoint)
+	users.GET("/me", h.HandleGetMe)
 
-	transactions := base.Group("/transactions", handler.AuthorizeEndpoint)
-	transactions.GET("", handler.HandleGetTransactions)
-	transactions.POST("", handler.HandleCreateTransaction)
-	transactions.PUT("/:id", handler.HandleUpdateTransaction)
-	transactions.DELETE("/:id", handler.HandleDeleteTransaction)
-	transactions.DELETE("/:id/budget", handler.HandleRemoveTransactionFromBudget)
-	transactions.GET("/unassigned", handler.HandleGetUnassignedTransactions)
-	transactions.GET("/types/intervals", handler.HandleGetTransactionIntervals)
-	transactions.GET("/types/income", handler.HandleGetIncomeTypes)
-	transactions.GET("/types/expense", handler.HandleGetExpenseTypes)
-	transactions.GET("/summary/month", handler.HandleGetTransactionMonthInfo)
-	transactions.GET("/summary/month/type", handler.HandleGetTransactionsPerType)
-	transactions.GET("/summary/year", handler.HandleGetTransactionYearInfo)
-	transactions.GET("/summary/year/type", handler.HandleGetTransactionsYearInfoPerType)
+	transactions := base.Group("/transactions", h.AuthorizeEndpoint)
+	transactions.GET("", h.HandleGetTransactions)
+	transactions.POST("", h.HandleCreateTransaction)
+	transactions.PUT("/:id", h.HandleUpdateTransaction)
+	transactions.DELETE("/:id", h.HandleDeleteTransaction)
+	transactions.DELETE("/:id/budget", h.HandleRemoveTransactionFromBudget)
+	transactions.GET("/unassigned", h.HandleGetUnassignedTransactions)
+	transactions.GET("/types/intervals", h.HandleGetTransactionIntervals)
+	transactions.GET("/types/income", h.HandleGetIncomeTypes)
+	transactions.GET("/types/expense", h.HandleGetExpenseTypes)
+	transactions.GET("/summary/month", h.HandleGetTransactionMonthInfo)
+	transactions.GET("/summary/month/type", h.HandleGetTransactionsPerType)
+	transactions.GET("/summary/year", h.HandleGetTransactionYearInfo)
+	transactions.GET("/summary/year/type", h.HandleGetTransactionsYearInfoPerType)
 
-	budgets := base.Group("/budgets", handler.AuthorizeEndpoint)
-	budgets.GET("", handler.HandleGetBudgets)
-	budgets.POST("", handler.HandleCreateBudget)
-	budgets.GET("/:id", handler.HandleGetBudget)
-	budgets.PUT("/:id", handler.HandleUpdateBudget)
-	budgets.DELETE("/:id", handler.HandleDeleteBudget)
-	budgets.DELETE("/:id/expenses/:expense_id", handler.HandleDeleteBudgetExpense)
-	budgets.POST("/:id/expenses/:expense_id/transactions", handler.HandleAddBudgetTransactions)
+	budgets := base.Group("/budgets", h.AuthorizeEndpoint)
+	budgets.GET("", h.HandleGetBudgets)
+	budgets.POST("", h.HandleCreateBudget)
+	budgets.GET("/:id", h.HandleGetBudget)
+	budgets.PUT("/:id", h.HandleUpdateBudget)
+	budgets.DELETE("/:id", h.HandleDeleteBudget)
+	budgets.DELETE("/:id/expenses/:expense_id", h.HandleDeleteBudgetExpense)
+	budgets.POST("/:id/expenses/:expense_id/transactions", h.HandleAddBudgetTransactions)
 
 	e.Logger.Fatal(e.Start(env.Port))
 }

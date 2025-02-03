@@ -335,7 +335,7 @@ func (repository *TransactionRepository) UpdateRecurring(ctx context.Context, pa
 			RecurringTransactionID: recurringTransaction.ID,
 		})
 		if err != nil {
-			return fmt.Errorf("Error deleting recurring transactions: %v", err.Error())
+			return fmt.Errorf("error deleting recurring transactions: %v", err.Error())
 		}
 
 		createParams := getRecurringTransactions(getRecurringTransactionsParams{
@@ -353,7 +353,7 @@ func (repository *TransactionRepository) UpdateRecurring(ctx context.Context, pa
 		for _, params := range createParams {
 			_, err := repository.Add(ctx, params)
 			if err != nil {
-				return fmt.Errorf("Error creating transaction: %v", err.Error())
+				return fmt.Errorf("error creating transaction: %v", err.Error())
 			}
 		}
 	} else {
@@ -362,7 +362,7 @@ func (repository *TransactionRepository) UpdateRecurring(ctx context.Context, pa
 			RecurringTransactionID: params.Params.ID,
 		})
 		if err != nil {
-			return fmt.Errorf("Error getting recurring transactions: %v", err.Error())
+			return fmt.Errorf("error getting recurring transactions: %v", err.Error())
 		}
 
 		if endDate.After(recurringTransaction.EndDate) {
@@ -381,7 +381,7 @@ func (repository *TransactionRepository) UpdateRecurring(ctx context.Context, pa
 			for idx := 1; idx < len(createParams); idx++ {
 				_, err := repository.Add(ctx, createParams[idx])
 				if err != nil {
-					return fmt.Errorf("Error creating transaction: %v", err.Error())
+					return fmt.Errorf("error creating transaction: %v", err.Error())
 				}
 			}
 		} else if endDate.Before(recurringTransaction.EndDate) {
@@ -391,14 +391,14 @@ func (repository *TransactionRepository) UpdateRecurring(ctx context.Context, pa
 				Date:                   endDate,
 			})
 			if err != nil {
-				return fmt.Errorf("Error deleting transactions after new end date: %v", err.Error())
+				return fmt.Errorf("error deleting transactions after new end date: %v", err.Error())
 			}
 
 			for idx := len(transactions) - 1; idx >= 0; idx-- {
 				if transactions[idx].Date.After(endDate) {
 					err := repository.Remove(ctx, userId, transactions[idx].ID)
 					if err != nil {
-						return fmt.Errorf("Error delete transaction: %v", err.Error())
+						return fmt.Errorf("error deleting transaction: %v", err.Error())
 					}
 				} else {
 					break
@@ -417,7 +417,7 @@ func (repository *TransactionRepository) UpdateRecurring(ctx context.Context, pa
 					Date:        transaction.Date,
 				})
 				if err != nil {
-					return fmt.Errorf("Error updating transaction: %v", err.Error())
+					return fmt.Errorf("error updating transaction: %v", err.Error())
 				}
 			}
 		}

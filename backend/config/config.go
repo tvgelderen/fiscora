@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"log"
 	"log/slog"
 	"os"
 	"strconv"
@@ -28,8 +29,7 @@ var Env = getEnvironment()
 func getEnvironment() Environment {
 	err := godotenv.Load()
 	if err != nil {
-		fmt.Println("Error loading .env file")
-		os.Exit(1)
+		log.Fatal("Error loading .env file")
 	}
 
 	slog.Info("Loading environment variables.")

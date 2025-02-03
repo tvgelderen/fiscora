@@ -51,7 +51,7 @@ func DeleteToken(w http.ResponseWriter) {
 	cookie := http.Cookie{
 		Name:     accessTokenKey,
 		Value:    "",
-		MaxAge:   0,
+		MaxAge:   36000,
 		Path:     "/",
 		HttpOnly: true,
 		Secure:   config.Env.Production,

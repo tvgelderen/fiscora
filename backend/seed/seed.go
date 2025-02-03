@@ -3,6 +3,7 @@ package seed
 import (
 	"context"
 	"database/sql"
+	"flag"
 	"fmt"
 	"log/slog"
 	"math/rand"
@@ -15,7 +16,19 @@ import (
 
 var userId uuid.UUID
 
-func Seed(conn *sql.DB) {
+func CheckSeed(conn *sql.DB) {
+	seedFlag := flag.Bool("seed", false, "Set to true to seed the demo account")
+	seedMeFlag := flag.Bool("seed-me", false, "Set to true to seed personal account")
+	flag.Parse()
+	if *seedFlag {
+		seed(conn)
+	}
+	if *seedMeFlag {
+		seedMyAccount(conn)
+	}
+}
+
+func seed(conn *sql.DB) {
 	slog.Info("Seeding repository.")
 
 	userRepository := repository.CreateUserRepository(conn)
@@ -34,7 +47,7 @@ func Seed(conn *sql.DB) {
 	createBudgets(budgetRepository)
 }
 
-func SeedMyAccount(conn *sql.DB) {
+func seedMyAccount(conn *sql.DB) {
 	slog.Info("Seeding repository.")
 
 	userRepository := repository.CreateUserRepository(conn)

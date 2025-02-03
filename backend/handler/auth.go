@@ -1,4 +1,4 @@
-package handlers
+package handler
 
 import (
 	"context"
@@ -104,5 +104,5 @@ func (h *Handler) HandleDemoLogin(c echo.Context) error {
 func (h *Handler) HandleLogout(c echo.Context) error {
 	auth.DeleteToken(c.Response().Writer)
 
-	return c.NoContent(http.StatusOK)
+	return c.Redirect(http.StatusTemporaryRedirect, config.Env.FrontendUrl)
 }
