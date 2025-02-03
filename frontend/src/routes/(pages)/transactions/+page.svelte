@@ -8,10 +8,11 @@
 	import { getCurrentMonthNumber, getCurrentYear, listAllMonths } from "$lib";
 	import * as Dialog from "$lib/components/ui/dialog";
 	import * as Popover from "$lib/components/ui/popover/index.js";
-	import { Button } from "$lib/components/ui/button";
+	import { Button, buttonVariants } from "$lib/components/ui/button";
 	import { CalendarIcon } from "lucide-svelte";
 	import MonthPicker from "$lib/components/month-picker.svelte";
 	import { onMount, tick } from "svelte";
+	import { cn } from "$lib/utils";
 
 	let { data } = $props();
 	let { transactions, transactionIntervals, incomeTypes, expenseTypes, yearInfo, demo } = data;
@@ -147,11 +148,11 @@
 	</div>
 
 	<Popover.Root>
-		<Popover.Trigger>
-			<Button variant="outline" class="!h-fit w-[240px] justify-start text-left text-base">
-				<CalendarIcon class="mr-2 h-5 w-5" />
-				{months.get(month)}
-			</Button>
+		<Popover.Trigger
+			class={cn("!h-fit w-[240px] justify-start text-left text-base", buttonVariants({ variant: "outline" }))}
+		>
+			<CalendarIcon class="mr-2 h-5 w-5" />
+			{months.get(month)}
 		</Popover.Trigger>
 		<Popover.Content class="w-auto p-0">
 			<MonthPicker bind:year bind:month callback={handleMonthChanged} />

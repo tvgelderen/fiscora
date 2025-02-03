@@ -246,11 +246,11 @@ table:has(.transactions-table-row) {
 }
 
 .demo-container {
-    @apply relative rounded-lg border-2 border-primary;
+    @apply relative rounded-lg border-2 border-primary/50;
 }
 
 .demo-container-tag {
-    @apply absolute left-[50%] translate-x-[-50%] translate-y-[-135%] rounded-md bg-primary px-[6px] py-[2px] text-xs dark:bg-primary md:translate-y-[-155%] md:text-sm;
+    @apply absolute left-[50%] translate-x-[-50%] translate-y-[-135%] rounded-md bg-primary px-[6px] py-[2px] text-xs dark:bg-primary md:translate-y-[-155%] md:text-sm text-white;
 }
 
 .h-full-page {

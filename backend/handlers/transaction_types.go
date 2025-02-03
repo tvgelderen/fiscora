@@ -7,7 +7,7 @@ import (
 	"github.com/tvgelderen/fiscora/repository"
 )
 
-func (h *APIHandler) HandleGetTransactionIntervals(c echo.Context) error {
+func (h *Handler) HandleGetTransactionIntervals(c echo.Context) error {
 	intervals := make([]string, len(repository.TransactionIntervals))
 
 	for idx, interval := range repository.TransactionIntervals {
@@ -17,7 +17,7 @@ func (h *APIHandler) HandleGetTransactionIntervals(c echo.Context) error {
 	return c.JSON(http.StatusOK, intervals)
 }
 
-func (h *APIHandler) HandleGetIncomeTypes(c echo.Context) error {
+func (h *Handler) HandleGetIncomeTypes(c echo.Context) error {
 	incomeTypes := make([]string, len(repository.IncomeTypes))
 
 	for idx, incomeType := range repository.IncomeTypes {
@@ -27,7 +27,7 @@ func (h *APIHandler) HandleGetIncomeTypes(c echo.Context) error {
 	return c.JSON(http.StatusOK, incomeTypes)
 }
 
-func (h *APIHandler) HandleGetExpenseTypes(c echo.Context) error {
+func (h *Handler) HandleGetExpenseTypes(c echo.Context) error {
 	expenseTypes := make([]string, len(repository.ExpenseTypes))
 
 	for idx, expenseType := range repository.ExpenseTypes {

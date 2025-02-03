@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/labstack/gommon/log"
 )
 
 type ITransactionRepository interface {
@@ -331,16 +330,13 @@ func (repository *TransactionRepository) UpdateRecurring(ctx context.Context, pa
 	daysInterval := params.Params.DaysInterval
 
 	if recurringTransaction.Interval != interval || recurringTransaction.StartDate.UTC() != startDate {
-		nrows, err := db.DeleteTransactionsByRecurringTransactionId(ctx, DeleteTransactionsByRecurringTransactionIdParams{
+		_, err := db.DeleteTransactionsByRecurringTransactionId(ctx, DeleteTransactionsByRecurringTransactionIdParams{
 			UserID:                 userId,
 			RecurringTransactionID: recurringTransaction.ID,
 		})
 		if err != nil {
-			log.Error(fmt.Sprintf("Error deleting recurring transactions: %v", err.Error()))
-			return err
+			return fmt.Errorf("Error deleting recurring transactions: %v", err.Error())
 		}
-
-		log.Infof("Successfully deleted %d transactions on updating recurring transaction %d", nrows, recurringTransaction.ID)
 
 		createParams := getRecurringTransactions(getRecurringTransactionsParams{
 			UserID:                 userId,
@@ -357,8 +353,7 @@ func (repository *TransactionRepository) UpdateRecurring(ctx context.Context, pa
 		for _, params := range createParams {
 			_, err := repository.Add(ctx, params)
 			if err != nil {
-				log.Error(fmt.Sprintf("Error creating transaction: %v", err.Error()))
-				return err
+				return fmt.Errorf("Error creating transaction: %v", err.Error())
 			}
 		}
 	} else {
@@ -367,8 +362,7 @@ func (repository *TransactionRepository) UpdateRecurring(ctx context.Context, pa
 			RecurringTransactionID: params.Params.ID,
 		})
 		if err != nil {
-			log.Error(fmt.Sprintf("Error getting recurring transactions: %v", err.Error()))
-			return err
+			return fmt.Errorf("Error getting recurring transactions: %v", err.Error())
 		}
 
 		if endDate.After(recurringTransaction.EndDate) {
@@ -387,29 +381,24 @@ func (repository *TransactionRepository) UpdateRecurring(ctx context.Context, pa
 			for idx := 1; idx < len(createParams); idx++ {
 				_, err := repository.Add(ctx, createParams[idx])
 				if err != nil {
-					log.Error(fmt.Sprintf("Error creating transaction: %v", err.Error()))
-					return err
+					return fmt.Errorf("Error creating transaction: %v", err.Error())
 				}
 			}
 		} else if endDate.Before(recurringTransaction.EndDate) {
-			nrows, err := db.DeleteTransactionsByRecurringTransactionIdAndWhereDate(ctx, DeleteTransactionsByRecurringTransactionIdAndWhereDateParams{
+			_, err := db.DeleteTransactionsByRecurringTransactionIdAndWhereDate(ctx, DeleteTransactionsByRecurringTransactionIdAndWhereDateParams{
 				UserID:                 userId,
 				RecurringTransactionID: recurringTransaction.ID,
 				Date:                   endDate,
 			})
 			if err != nil {
-				log.Error(fmt.Sprintf("Error deleting transactions after new end date: %v", err.Error()))
-				return err
+				return fmt.Errorf("Error deleting transactions after new end date: %v", err.Error())
 			}
-
-			log.Infof("Successfully deleted %d transactions that were after new end date", nrows, recurringTransaction.ID)
 
 			for idx := len(transactions) - 1; idx >= 0; idx-- {
 				if transactions[idx].Date.After(endDate) {
 					err := repository.Remove(ctx, userId, transactions[idx].ID)
 					if err != nil {
-						log.Error(fmt.Sprintf("Error delete transaction: %v", err.Error()))
-						return err
+						return fmt.Errorf("Error delete transaction: %v", err.Error())
 					}
 				} else {
 					break
@@ -428,8 +417,7 @@ func (repository *TransactionRepository) UpdateRecurring(ctx context.Context, pa
 					Date:        transaction.Date,
 				})
 				if err != nil {
-					log.Error(fmt.Sprintf("Error updating transaction: %v", err.Error()))
-					return err
+					return fmt.Errorf("Error updating transaction: %v", err.Error())
 				}
 			}
 		}

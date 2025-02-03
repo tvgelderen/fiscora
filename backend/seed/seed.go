@@ -3,11 +3,12 @@ package seed
 import (
 	"context"
 	"database/sql"
+	"fmt"
+	"log/slog"
 	"math/rand"
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/labstack/gommon/log"
 	"github.com/tvgelderen/fiscora/repository"
 	"github.com/tvgelderen/fiscora/types"
 )
@@ -15,7 +16,7 @@ import (
 var userId uuid.UUID
 
 func Seed(conn *sql.DB) {
-	log.Info("Seeding repository.")
+	slog.Info("Seeding repository.")
 
 	userRepository := repository.CreateUserRepository(conn)
 	transactionRepository := repository.CreateTransactionRepository(conn)
@@ -23,18 +24,18 @@ func Seed(conn *sql.DB) {
 
 	userId, _ = uuid.NewUUID()
 
-	log.Info("Creating demo user.")
+	slog.Info("Creating demo user.")
 	createDemoUser(userRepository)
 
-	log.Info("Creating demo user transactions.")
+	slog.Info("Creating demo user transactions.")
 	createTransactions(transactionRepository)
 
-	log.Info("Creating demo user budgets.")
+	slog.Info("Creating demo user budgets.")
 	createBudgets(budgetRepository)
 }
 
 func SeedMyAccount(conn *sql.DB) {
-	log.Info("Seeding repository.")
+	slog.Info("Seeding repository.")
 
 	userRepository := repository.CreateUserRepository(conn)
 	transactionRepository := repository.CreateTransactionRepository(conn)
@@ -42,15 +43,15 @@ func SeedMyAccount(conn *sql.DB) {
 
 	user, err := userRepository.GetByEmail(context.Background(), "thvangelderen@gmail.com")
 	if err != nil {
-		log.Fatal("Error getting user from db: ", err.Error())
+		slog.Error(fmt.Sprintf("Error getting user from db: ", err.Error()))
 	}
 
 	userId = user.ID
 
-	log.Info("Creating transactions.")
+	slog.Info("Creating transactions.")
 	createTransactions(transactionRepository)
 
-	log.Info("Creating bugets.")
+	slog.Info("Creating bugets.")
 	createBudgets(budgetRepository)
 }
 

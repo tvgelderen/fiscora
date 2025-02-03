@@ -2,16 +2,17 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 
 	"github.com/labstack/echo/v4"
-	"github.com/labstack/gommon/log"
 	"github.com/tvgelderen/fiscora/repository"
 	"github.com/tvgelderen/fiscora/types"
 )
 
-func (h *APIHandler) HandleGetTransactions(c echo.Context) error {
+func (h *Handler) HandleGetTransactions(c echo.Context) error {
+	logger := getLogger(c)
 	userId := getUserId(c)
 	month := getMonth(c)
 	year := getYear(c)
@@ -36,14 +37,15 @@ func (h *APIHandler) HandleGetTransactions(c echo.Context) error {
 		if repository.NoRowsFound(err) {
 			return c.NoContent(http.StatusNotFound)
 		}
-		log.Errorf("Error getting transactions from db: %v", err.Error())
+		logger.Error(fmt.Sprintf("Error getting transactions from db: %v", err.Error()))
 		return c.String(http.StatusInternalServerError, "Something went wrong")
 	}
 
 	return c.JSON(http.StatusOK, types.ToTransactionReturns(transactions))
 }
 
-func (h *APIHandler) HandleGetUnassignedTransactions(c echo.Context) error {
+func (h *Handler) HandleGetUnassignedTransactions(c echo.Context) error {
+	logger := getLogger(c)
 	userId := getUserId(c)
 	startDate, startDateErr := getStartDate(c)
 	endDate, endDateErr := getEndDate(c)
@@ -63,19 +65,21 @@ func (h *APIHandler) HandleGetUnassignedTransactions(c echo.Context) error {
 		if repository.NoRowsFound(err) {
 			return c.NoContent(http.StatusNotFound)
 		}
-		log.Errorf("Error getting transactions from db: %v", err.Error())
+		logger.Error(fmt.Sprintf("Error getting transactions from db: %v", err.Error()))
 		return c.String(http.StatusInternalServerError, "Something went wrong")
 	}
 
 	return c.JSON(http.StatusOK, types.ToBaseTransactionReturns(transactions))
 }
 
-func (h *APIHandler) HandleCreateTransaction(c echo.Context) error {
+func (h *Handler) HandleCreateTransaction(c echo.Context) error {
+	logger := getLogger(c)
+
 	decoder := json.NewDecoder(c.Request().Body)
 	transaction := types.TransactionForm{}
 	err := decoder.Decode(&transaction)
 	if err != nil {
-		log.Errorf("Error decoding request body: %v", err.Error())
+		logger.Error(fmt.Sprintf("Error decoding request body: %v", err.Error()))
 		return c.String(http.StatusBadRequest, "Error decoding request body")
 	}
 
@@ -106,29 +110,30 @@ func (h *APIHandler) HandleCreateTransaction(c echo.Context) error {
 		})
 	}
 	if err != nil {
-		log.Errorf("Error creating transaction: %v", err.Error())
+		logger.Error(fmt.Sprintf("Error creating transaction: %v", err.Error()))
 		return c.String(http.StatusInternalServerError, "Something went wrong")
 	}
 
 	return c.String(http.StatusCreated, "Transaction created successfully")
 }
 
-func (h *APIHandler) HandleUpdateTransaction(c echo.Context) error {
+func (h *Handler) HandleUpdateTransaction(c echo.Context) error {
+	logger := getLogger(c)
+
 	decoder := json.NewDecoder(c.Request().Body)
 	transactionForm := types.TransactionForm{}
 	err := decoder.Decode(&transactionForm)
 	if err != nil {
-		log.Errorf("Error decoding request body: %v", err.Error())
+		logger.Error(fmt.Sprintf("Error decoding request body: %v", err.Error()))
 		return c.String(http.StatusBadRequest, "Error decoding request body")
 	}
 
 	// TODO: validate transaction object
 
 	userId := getUserId(c)
-	transactionIdParam := c.Param("id")
-	transactionId, err := strconv.ParseInt(transactionIdParam, 10, 32)
+	transactionId, err := strconv.ParseInt(c.Param("id"), 10, 32)
 	if err != nil {
-		log.Errorf("Error parsing transaction id from request: %v", err.Error())
+		logger.Error(fmt.Sprintf("Error parsing transaction id from request: %v", err.Error()))
 		return c.String(http.StatusBadRequest, "Error decoding request body")
 	}
 
@@ -137,7 +142,7 @@ func (h *APIHandler) HandleUpdateTransaction(c echo.Context) error {
 		if repository.NoRowsFound(err) {
 			return c.NoContent(http.StatusNotFound)
 		}
-		log.Errorf("Error updating transaction: %v", err.Error())
+		logger.Error(fmt.Sprintf("Error updating transaction: %v", err.Error()))
 		return c.String(http.StatusInternalServerError, "Something went wrong")
 	}
 
@@ -156,7 +161,7 @@ func (h *APIHandler) HandleUpdateTransaction(c echo.Context) error {
 			Type:        transactionForm.Type,
 		})
 		if err != nil {
-			log.Errorf("Error updating recurring transaction: %v", err.Error())
+			logger.Error(fmt.Sprintf("Error updating recurring transaction: %v", err.Error()))
 			return c.String(http.StatusInternalServerError, "Something went wrong")
 		}
 
@@ -172,18 +177,20 @@ func (h *APIHandler) HandleUpdateTransaction(c echo.Context) error {
 		Type:        transactionForm.Type,
 	})
 	if err != nil {
-		log.Errorf("Error updating transaction: %v", err.Error())
+		logger.Error(fmt.Sprintf("Error updating transaction: %v", err.Error()))
 		return c.String(http.StatusInternalServerError, "Something went wrong")
 	}
 
 	return c.NoContent(http.StatusNoContent)
 }
 
-func (h *APIHandler) HandleRemoveTransactionFromBudget(c echo.Context) error {
+func (h *Handler) HandleRemoveTransactionFromBudget(c echo.Context) error {
+	logger := getLogger(c)
 	userId := getUserId(c)
+
 	transactionId, err := strconv.ParseInt(c.Param("id"), 10, 32)
 	if err != nil {
-		log.Errorf("Error parsing transaction id from request: %v", err.Error())
+		logger.Error(fmt.Sprintf("Error parsing transaction id from request: %v", err.Error()))
 		return c.NoContent(http.StatusBadRequest)
 	}
 
@@ -192,18 +199,20 @@ func (h *APIHandler) HandleRemoveTransactionFromBudget(c echo.Context) error {
 		if repository.NoRowsFound(err) {
 			return c.NoContent(http.StatusNotFound)
 		}
-		log.Errorf("Error deleting transaction: %v", err.Error())
+		logger.Error(fmt.Sprintf("Error deleting transaction: %v", err.Error()))
 		return c.String(http.StatusInternalServerError, "Something went wrong")
 	}
 
 	return c.NoContent(http.StatusNoContent)
 }
 
-func (h *APIHandler) HandleDeleteTransaction(c echo.Context) error {
+func (h *Handler) HandleDeleteTransaction(c echo.Context) error {
+	logger := getLogger(c)
 	userId := getUserId(c)
+
 	transactionId, err := strconv.ParseInt(c.Param("id"), 10, 32)
 	if err != nil {
-		log.Errorf("Error parsing transaction id from request: %v", err.Error())
+		logger.Error(fmt.Sprintf("Error parsing transaction id from request: %v", err.Error()))
 		return c.NoContent(http.StatusBadRequest)
 	}
 
@@ -212,7 +221,7 @@ func (h *APIHandler) HandleDeleteTransaction(c echo.Context) error {
 		if repository.NoRowsFound(err) {
 			return c.NoContent(http.StatusNotFound)
 		}
-		log.Errorf("Error deleting transaction: %v", err.Error())
+		logger.Error(fmt.Sprintf("Error deleting transaction: %v", err.Error()))
 		return c.String(http.StatusInternalServerError, "Something went wrong")
 	}
 
@@ -222,7 +231,7 @@ func (h *APIHandler) HandleDeleteTransaction(c echo.Context) error {
 			if repository.NoRowsFound(err) {
 				return c.NoContent(http.StatusNotFound)
 			}
-			log.Errorf("Error deleting transaction: %v", err.Error())
+			logger.Error(fmt.Sprintf("Error deleting transaction: %v", err.Error()))
 			return c.String(http.StatusInternalServerError, "Something went wrong")
 		}
 
@@ -231,7 +240,7 @@ func (h *APIHandler) HandleDeleteTransaction(c echo.Context) error {
 
 	err = h.TransactionRepository.Remove(c.Request().Context(), userId, int32(transactionId))
 	if err != nil {
-		log.Errorf("Error deleting transaction: %v", err.Error())
+		logger.Error(fmt.Sprintf("Error deleting transaction: %v", err.Error()))
 		return c.String(http.StatusInternalServerError, "Something went wrong")
 	}
 

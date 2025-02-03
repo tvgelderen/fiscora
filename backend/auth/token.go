@@ -31,7 +31,7 @@ func CreateToken(id uuid.UUID, name, email string) (string, error) {
 		},
 	})
 
-	return token.SignedString([]byte(config.Envs.HMAC))
+	return token.SignedString([]byte(config.Env.HMAC))
 }
 
 func SetToken(w http.ResponseWriter, token string) {
@@ -41,7 +41,7 @@ func SetToken(w http.ResponseWriter, token string) {
 		MaxAge:   36000,
 		Path:     "/",
 		HttpOnly: true,
-		Secure:   config.Envs.Production,
+		Secure:   config.Env.Production,
 	}
 
 	http.SetCookie(w, &cookie)
@@ -54,7 +54,7 @@ func DeleteToken(w http.ResponseWriter) {
 		MaxAge:   0,
 		Path:     "/",
 		HttpOnly: true,
-		Secure:   config.Envs.Production,
+		Secure:   config.Env.Production,
 	}
 
 	http.SetCookie(w, &cookie)
@@ -96,7 +96,7 @@ func getToken(r *http.Request) (string, error) {
 
 func parseToken(token string) (*jwt.Token, error) {
 	parsedToken, err := jwt.ParseWithClaims(token, &CustomClaims{}, func(token *jwt.Token) (interface{}, error) {
-		return []byte(config.Envs.HMAC), nil
+		return []byte(config.Env.HMAC), nil
 	})
 
 	return parsedToken, err

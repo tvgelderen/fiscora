@@ -6,13 +6,13 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
-	"github.com/labstack/gommon/log"
 	"github.com/tvgelderen/fiscora/repository"
 	"github.com/tvgelderen/fiscora/types"
 )
 
-func (h *APIHandler) HandleGetMe(c echo.Context) error {
-	id := c.Get(userIdKey)
+func (h *Handler) HandleGetMe(c echo.Context) error {
+	logger := getLogger(c)
+	id := c.Get(UserIdCtxKey)
 	if id == nil {
 		return c.String(http.StatusBadRequest, "User id missing from request context")
 	}
@@ -22,7 +22,7 @@ func (h *APIHandler) HandleGetMe(c echo.Context) error {
 		if repository.NoRowsFound(err) {
 			return c.NoContent(http.StatusNotFound)
 		}
-		log.Error(fmt.Sprintf("Error getting user db: %v", err.Error()))
+		logger.Error(fmt.Sprintf("Error getting user db: %v", err.Error()))
 		return c.String(http.StatusInternalServerError, "Something went wrong")
 	}
 

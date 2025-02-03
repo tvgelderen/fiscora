@@ -1,17 +1,18 @@
 package handlers
 
 import (
+	"fmt"
 	"math"
 	"net/http"
 	"strconv"
 
 	"github.com/labstack/echo/v4"
-	"github.com/labstack/gommon/log"
 	"github.com/tvgelderen/fiscora/repository"
 	"github.com/tvgelderen/fiscora/types"
 )
 
-func (h *APIHandler) HandleGetTransactionMonthInfo(c echo.Context) error {
+func (h *Handler) HandleGetTransactionMonthInfo(c echo.Context) error {
+	logger := getLogger(c)
 	userId := getUserId(c)
 	month := getMonth(c)
 	year := getYear(c)
@@ -26,7 +27,7 @@ func (h *APIHandler) HandleGetTransactionMonthInfo(c echo.Context) error {
 		if repository.NoRowsFound(err) {
 			return c.NoContent(http.StatusNotFound)
 		}
-		log.Errorf("Error getting transactions from db: %v", err.Error())
+		logger.Error(fmt.Sprintf("Error getting transactions from db: %v", err.Error()))
 		return c.String(http.StatusInternalServerError, "Something went wrong")
 	}
 
@@ -35,7 +36,8 @@ func (h *APIHandler) HandleGetTransactionMonthInfo(c echo.Context) error {
 	return c.JSON(http.StatusOK, monthInfo)
 }
 
-func (h *APIHandler) HandleGetTransactionYearInfo(c echo.Context) error {
+func (h *Handler) HandleGetTransactionYearInfo(c echo.Context) error {
+	logger := getLogger(c)
 	userId := getUserId(c)
 	year := getYear(c)
 
@@ -52,7 +54,7 @@ func (h *APIHandler) HandleGetTransactionYearInfo(c echo.Context) error {
 			if repository.NoRowsFound(err) {
 				return c.NoContent(http.StatusNotFound)
 			}
-			log.Errorf("Error getting transactions from db: %v", err.Error())
+			logger.Error(fmt.Sprintf("Error getting transactions from db: %v", err.Error()))
 			return c.String(http.StatusInternalServerError, "Something went wrong")
 		}
 
@@ -64,7 +66,9 @@ func (h *APIHandler) HandleGetTransactionYearInfo(c echo.Context) error {
 	return c.JSON(http.StatusOK, yearInfo)
 }
 
-func (h *APIHandler) HandleGetTransactionsYearInfoPerType(c echo.Context) error {
+func (h *Handler) HandleGetTransactionsYearInfoPerType(c echo.Context) error {
+	logger := getLogger(c)
+
 	income, err := strconv.ParseBool(c.QueryParam("income"))
 	if err != nil {
 		return c.String(http.StatusBadRequest, "Invalid income type")
@@ -92,7 +96,7 @@ func (h *APIHandler) HandleGetTransactionsYearInfoPerType(c echo.Context) error 
 			if val, ok := transactionTypesMonth[key]; ok {
 				transactionTypes[key] += val
 			} else {
-				log.Errorf("Error getting yearly transaction info per type: invalid key")
+				logger.Error("Error getting yearly transaction info per type: invalid key")
 				return c.String(http.StatusInternalServerError, "Something went wrong")
 			}
 		}
@@ -111,14 +115,13 @@ func (h *APIHandler) HandleGetTransactionsYearInfoPerType(c echo.Context) error 
 	return c.JSON(http.StatusOK, transactionTypes)
 }
 
-func (h *APIHandler) HandleGetTransactionsPerType(c echo.Context) error {
+func (h *Handler) HandleGetTransactionsPerType(c echo.Context) error {
 	income, err := strconv.ParseBool(c.QueryParam("income"))
 	if err != nil {
 		return c.String(http.StatusBadRequest, "Invalid income type")
 	}
 
 	month := getMonth(c)
-
 	transactionTypes, err := getTransactionsPerType(c, h.TransactionRepository, month, income)
 	if err != nil {
 		return err
@@ -134,6 +137,7 @@ func (h *APIHandler) HandleGetTransactionsPerType(c echo.Context) error {
 }
 
 func getTransactionsPerType(c echo.Context, transactionRepository repository.ITransactionRepository, month int, income bool) (map[string]float64, error) {
+	logger := getLogger(c)
 	userId := getUserId(c)
 	year := getYear(c)
 	dateRange := getMonthRange(month, year)
@@ -155,7 +159,7 @@ func getTransactionsPerType(c echo.Context, transactionRepository repository.ITr
 		if repository.NoRowsFound(err) {
 			return nil, c.NoContent(http.StatusNotFound)
 		}
-		log.Errorf("Error getting transactions from db: %v", err.Error())
+		logger.Error(fmt.Sprintf("Error getting transactions from db: %v", err.Error()))
 		return nil, c.String(http.StatusInternalServerError, "Something went wrong")
 	}
 

@@ -11,7 +11,7 @@ type AuthService struct {
 }
 
 func NewAuthService() *AuthService {
-	env := config.Envs
+	env := config.Env
 
 	googleConfig := &oauth2.Config{
 		ClientID:     env.GoogleID,

@@ -1,36 +1,33 @@
 package handlers
 
 import (
-	"database/sql"
+	"log/slog"
 	"math/rand"
 	"strconv"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
-	"github.com/tvgelderen/fiscora/auth"
-	"github.com/tvgelderen/fiscora/repository"
 	"github.com/tvgelderen/fiscora/types"
 )
 
-type APIHandler struct {
-	UserRepository        repository.IUserRepository
-	TransactionRepository repository.ITransactionRepository
-	BudgetRepository      repository.IBudgetRepository
-	AuthService           *auth.AuthService
-}
-
-func NewAPIHandler(db *sql.DB, auth *auth.AuthService) *APIHandler {
-	return &APIHandler{
-		UserRepository:        repository.CreateUserRepository(db),
-		TransactionRepository: repository.CreateTransactionRepository(db),
-		BudgetRepository:      repository.CreateBudgetRepository(db),
-		AuthService:           auth,
+func getLogger(c echo.Context) *slog.Logger {
+	value := c.Get(LoggerCtxKey)
+	if value == nil {
+		return slog.Default()
 	}
+
+	logger, ok := value.(*slog.Logger)
+	if !ok {
+		slog.Error("Error parsing logger for the current handler")
+		return slog.Default()
+	}
+
+	return logger
 }
 
 func getUserId(c echo.Context) uuid.UUID {
-	return c.Get(userIdKey).(uuid.UUID)
+	return c.Get(UserIdCtxKey).(uuid.UUID)
 }
 
 func getMonth(c echo.Context) int {

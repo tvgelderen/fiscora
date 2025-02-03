@@ -2,23 +2,24 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 
 	"github.com/labstack/echo/v4"
-	"github.com/labstack/gommon/log"
 	"github.com/tvgelderen/fiscora/repository"
 	"github.com/tvgelderen/fiscora/types"
 )
 
-func (h *APIHandler) HandleGetBudgets(c echo.Context) error {
+func (h *Handler) HandleGetBudgets(c echo.Context) error {
+	logger := getLogger(c)
 	userId := getUserId(c)
 	budgets, err := h.BudgetRepository.Get(c.Request().Context(), userId)
 	if err != nil {
 		if repository.NoRowsFound(err) {
 			return c.NoContent(http.StatusNotFound)
 		}
-		log.Errorf("Error getting budgets from db: %v", err.Error())
+		logger.Error(fmt.Sprintf("Error getting budgets from db: %v", err.Error()))
 		return c.String(http.StatusInternalServerError, "Something went wrong")
 	}
 
@@ -30,12 +31,12 @@ func (h *APIHandler) HandleGetBudgets(c echo.Context) error {
 	return c.JSON(http.StatusOK, returnBudgets)
 }
 
-func (h *APIHandler) HandleGetBudget(c echo.Context) error {
+func (h *Handler) HandleGetBudget(c echo.Context) error {
+	logger := getLogger(c)
 	userId := getUserId(c)
 	budgetId := c.Param("id")
 	if budgetId == "" {
-		log.Errorf("Error parsing budget id from request")
-		return c.String(http.StatusBadRequest, "Error decoding request body")
+		return c.String(http.StatusBadRequest, "Invalid budget id")
 	}
 
 	budget, err := h.BudgetRepository.GetById(c.Request().Context(), userId, budgetId)
@@ -43,7 +44,7 @@ func (h *APIHandler) HandleGetBudget(c echo.Context) error {
 		if repository.NoRowsFound(err) {
 			return c.NoContent(http.StatusNotFound)
 		}
-		log.Errorf("Error getting budget from db: %v", err.Error())
+		logger.Error(fmt.Sprintf("Error getting budget from db: %v", err.Error()))
 		return c.String(http.StatusInternalServerError, "Something went wrong")
 	}
 	if budget.UserID != userId {
@@ -52,7 +53,7 @@ func (h *APIHandler) HandleGetBudget(c echo.Context) error {
 
 	transactions, err := h.TransactionRepository.GetByBudgetId(c.Request().Context(), userId, budgetId)
 	if err != nil {
-		log.Errorf("Error getting budget transactions from db: %v", err.Error())
+		logger.Error(fmt.Sprintf("Error getting budget transactions from db: %v", err.Error()))
 	}
 
 	returnBudget := types.ToBudgetReturn(budget)
@@ -64,12 +65,13 @@ func (h *APIHandler) HandleGetBudget(c echo.Context) error {
 	return c.JSON(http.StatusOK, returnBudget)
 }
 
-func (h *APIHandler) HandleCreateBudget(c echo.Context) error {
+func (h *Handler) HandleCreateBudget(c echo.Context) error {
+	logger := getLogger(c)
 	decoder := json.NewDecoder(c.Request().Body)
 	budgetForm := types.BudgetForm{}
 	err := decoder.Decode(&budgetForm)
 	if err != nil {
-		log.Errorf("Error decoding request body: %v", err.Error())
+		logger.Error(fmt.Sprintf("Error decoding request body: %v", err.Error()))
 		return c.String(http.StatusBadRequest, "Error decoding request body")
 	}
 
@@ -86,7 +88,7 @@ func (h *APIHandler) HandleCreateBudget(c echo.Context) error {
 		EndDate:     budgetForm.EndDate,
 	})
 	if err != nil {
-		log.Errorf("Error creating budget: %v", err.Error())
+		logger.Error(fmt.Sprintf("Error creating budget: %v", err.Error()))
 		return c.String(http.StatusInternalServerError, "Something went wrong")
 	}
 
@@ -98,7 +100,7 @@ func (h *APIHandler) HandleCreateBudget(c echo.Context) error {
 			AllocatedAmount: strconv.FormatFloat(expense.AllocatedAmount, 'f', -1, 64),
 		})
 		if err != nil {
-			log.Errorf("Error creating budget expense: %v", err.Error())
+			logger.Error(fmt.Sprintf("Error creating budget expense: %v", err.Error()))
 			return c.String(http.StatusInternalServerError, "Something went wrong")
 		}
 
@@ -113,19 +115,19 @@ func (h *APIHandler) HandleCreateBudget(c echo.Context) error {
 	return c.JSON(http.StatusCreated, returnBudget)
 }
 
-func (h *APIHandler) HandleUpdateBudget(c echo.Context) error {
+func (h *Handler) HandleUpdateBudget(c echo.Context) error {
+	logger := getLogger(c)
 	userId := getUserId(c)
 	budgetId := c.Param("id")
 	if budgetId == "" {
-		log.Errorf("Error parsing budget id from request")
-		return c.String(http.StatusBadRequest, "Error decoding request body")
+		return c.String(http.StatusBadRequest, "Invalid budget id")
 	}
 
 	decoder := json.NewDecoder(c.Request().Body)
 	budgetForm := types.BudgetForm{}
 	err := decoder.Decode(&budgetForm)
 	if err != nil {
-		log.Errorf("Error decoding request body: %v", err.Error())
+		logger.Error(fmt.Sprintf("Error decoding request body: %v", err.Error()))
 		return c.String(http.StatusBadRequest, "Error decoding request body")
 	}
 
@@ -142,7 +144,7 @@ func (h *APIHandler) HandleUpdateBudget(c echo.Context) error {
 		if repository.NoRowsFound(err) {
 			return c.NoContent(http.StatusNotFound)
 		}
-		log.Errorf("Error updating budget: %v", err.Error())
+		logger.Error(fmt.Sprint("Error updating budget: %v", err.Error()))
 		return c.String(http.StatusInternalServerError, "Something went wrong")
 	}
 
@@ -151,7 +153,7 @@ func (h *APIHandler) HandleUpdateBudget(c echo.Context) error {
 		if repository.NoRowsFound(err) {
 			return c.NoContent(http.StatusNotFound)
 		}
-		log.Errorf("Error updating budget expense: %v", err.Error())
+		logger.Error(fmt.Sprintf("Error updating budget expense: %v", err.Error()))
 		return c.String(http.StatusInternalServerError, "Something went wrong")
 	}
 
@@ -163,7 +165,7 @@ func (h *APIHandler) HandleUpdateBudget(c echo.Context) error {
 				AllocatedAmount: strconv.FormatFloat(expense.AllocatedAmount, 'f', -1, 64),
 			})
 			if err != nil {
-				log.Errorf("Error creating budget expense: %v", err.Error())
+				logger.Error(fmt.Sprintf("Error creating budget expense: %v", err.Error()))
 				return c.String(http.StatusInternalServerError, "Something went wrong")
 			}
 			continue
@@ -179,7 +181,7 @@ func (h *APIHandler) HandleUpdateBudget(c echo.Context) error {
 					AllocatedAmount: allocatedAmount,
 				})
 				if err != nil {
-					log.Errorf("Error updating budget expense: %v", err.Error())
+					logger.Error(fmt.Sprintf("Error updating budget expense: %v", err.Error()))
 					return c.String(http.StatusInternalServerError, "Something went wrong")
 				}
 			}
@@ -193,16 +195,16 @@ func (h *APIHandler) HandleUpdateBudget(c echo.Context) error {
 	return c.JSON(http.StatusCreated, returnBudget)
 }
 
-func (h *APIHandler) HandleAddBudgetTransactions(c echo.Context) error {
+func (h *Handler) HandleAddBudgetTransactions(c echo.Context) error {
+	logger := getLogger(c)
 	userId := getUserId(c)
 	budgetId := c.Param("id")
 	if budgetId == "" {
-		log.Errorf("Error parsing budget id from request")
-		return c.String(http.StatusBadRequest, "Invalid url parameter")
+		return c.String(http.StatusBadRequest, "Invalid budget id")
 	}
 	budgetExpenseId, err := strconv.ParseInt(c.Param("expense_id"), 10, 32)
 	if err != nil {
-		log.Errorf("Error parsing budget expense id from request")
+		logger.Error("Error parsing budget expense id from request")
 		return c.String(http.StatusBadRequest, "Invalid url parameter")
 	}
 	if budgetExpenseId == -1 {
@@ -213,7 +215,7 @@ func (h *APIHandler) HandleAddBudgetTransactions(c echo.Context) error {
 	var transactionIds []int32
 	err = decoder.Decode(&transactionIds)
 	if err != nil {
-		log.Errorf("Error decoding request body: %v", err.Error())
+		logger.Error(fmt.Sprintf("Error decoding request body: %v", err.Error()))
 		return c.String(http.StatusBadRequest, "Error decoding request body")
 	}
 
@@ -228,26 +230,26 @@ func (h *APIHandler) HandleAddBudgetTransactions(c echo.Context) error {
 			if repository.NoRowsFound(err) {
 				return c.NoContent(http.StatusNotFound)
 			}
-			log.Errorf("Error updating budget id for transaction: %v", err.Error())
+			logger.Error(fmt.Sprintf("Error updating budget id for transaction: %v", err.Error()))
 			return c.String(http.StatusInternalServerError, "Something went wrong")
 		}
 	}
 
 	transactions, err := h.TransactionRepository.GetByBudgetId(c.Request().Context(), userId, budgetId)
 	if err != nil {
-		log.Errorf("Error getting transactions: %v", err.Error())
+		logger.Error(fmt.Sprintf("Error getting transactions: %v", err.Error()))
 		return c.String(http.StatusInternalServerError, "Something went wrong")
 	}
 
 	return c.JSON(http.StatusOK, types.ToTransactionReturns(transactions))
 }
 
-func (h *APIHandler) HandleDeleteBudget(c echo.Context) error {
+func (h *Handler) HandleDeleteBudget(c echo.Context) error {
+	logger := getLogger(c)
 	userId := getUserId(c)
 	budgetId := c.Param("id")
 	if budgetId == "" {
-		log.Errorf("Error parsing budget id from request")
-		return c.String(http.StatusBadRequest, "Invalid url parameter")
+		return c.String(http.StatusBadRequest, "Invalid budget id")
 	}
 
 	err := h.BudgetRepository.Remove(c.Request().Context(), userId, budgetId)
@@ -255,23 +257,23 @@ func (h *APIHandler) HandleDeleteBudget(c echo.Context) error {
 		if repository.NoRowsFound(err) {
 			return c.NoContent(http.StatusNotFound)
 		}
-		log.Errorf("Error deleting budget: %v", err.Error())
+		logger.Error(fmt.Sprintf("Error deleting budget: %v", err.Error()))
 		return c.String(http.StatusInternalServerError, "Something went wrong")
 	}
 
 	return c.String(http.StatusOK, "Budget deleted successfully")
 }
 
-func (h *APIHandler) HandleDeleteBudgetExpense(c echo.Context) error {
+func (h *Handler) HandleDeleteBudgetExpense(c echo.Context) error {
+	logger := getLogger(c)
 	userId := getUserId(c)
 	budgetId := c.Param("id")
 	if budgetId == "" {
-		log.Errorf("Error parsing budget id from request")
-		return c.String(http.StatusBadRequest, "Invalid url parameter")
+		return c.String(http.StatusBadRequest, "Invalid budget id")
 	}
 	budgetExpenseId, err := strconv.ParseInt(c.Param("expense_id"), 10, 32)
 	if err != nil {
-		log.Errorf("Error parsing budget expense id from request")
+		logger.Error("Error parsing budget expense id from request")
 		return c.String(http.StatusBadRequest, "Invalid url parameter")
 	}
 	if budgetExpenseId == -1 {
@@ -288,7 +290,7 @@ func (h *APIHandler) HandleDeleteBudgetExpense(c echo.Context) error {
 		if repository.NoRowsFound(err) {
 			return c.NoContent(http.StatusNotFound)
 		}
-		log.Errorf("Error deleting budget expense: %v", err.Error())
+		logger.Error(fmt.Sprintf("Error deleting budget expense: %v", err.Error()))
 		return c.String(http.StatusInternalServerError, "Something went wrong")
 	}
 

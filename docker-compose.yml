@@ -8,6 +8,8 @@ services:
       - "4173:4173"
     env_file:
       - ./frontend/.env
+    environment:
+      - NODE_ENV=production
     networks:
       - nginx_default
   backend:
@@ -18,8 +20,12 @@ services:
     ports:
       - "8080:8080"
       - "8081:8081"
+    volumes:
+      - /var/log/fiscora-backend:/var/log/fiscora-backend
     env_file:
       - ./backend/.env
+    environment:
+      - PRODUCTION=true
     networks:
       - nginx_default
 

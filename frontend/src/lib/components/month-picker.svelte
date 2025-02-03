@@ -65,7 +65,7 @@
 					role="presentation"
 				>
 					<button
-						class={`inline-flex h-9 w-16 items-center justify-center rounded-md p-0 text-sm transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2 dark:ring-offset-slate-950 dark:hover:bg-slate-800 dark:hover:text-slate-50 dark:focus-visible:ring-slate-800 ${k === month && year === yearState && "bg-primary text-slate-50 hover:bg-primary focus:bg-primary dark:text-slate-900 dark:hover:bg-primary dark:hover:text-slate-900 dark:focus:bg-primary"} ${k === currentMonth && k !== month && yearState === currentYear && "bg-slate-100 dark:bg-slate-800"}`}
+						class={`inline-flex h-9 w-16 items-center justify-center rounded-md p-0 text-sm transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2 dark:ring-offset-slate-950 dark:hover:bg-slate-800 dark:hover:text-slate-50 dark:focus-visible:ring-slate-800 ${k === month && year === yearState && "bg-primary text-slate-50 hover:bg-primary focus:bg-primary dark:hover:bg-primary dark:focus:bg-primary"} ${k === currentMonth && k !== month && yearState === currentYear && "bg-slate-100 dark:bg-slate-800"}`}
 						role="gridcell"
 						tabIndex={-1}
 						onclick={() => select(yearState, k)}

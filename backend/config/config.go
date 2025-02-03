@@ -1,10 +1,12 @@
 package config
 
 import (
+	"fmt"
+	"log/slog"
 	"os"
+	"strconv"
 
 	"github.com/joho/godotenv"
-	"github.com/labstack/gommon/log"
 )
 
 type Environment struct {
@@ -21,15 +23,16 @@ type Environment struct {
 	GoogleCallback     string
 }
 
-var Envs = getEnvironment()
+var Env = getEnvironment()
 
 func getEnvironment() Environment {
 	err := godotenv.Load()
 	if err != nil {
-		log.Fatal("Error loading .env file")
+		fmt.Println("Error loading .env file")
+		os.Exit(1)
 	}
 
-	log.Info("Loading environment variables...")
+	slog.Info("Loading environment variables.")
 
 	return Environment{
 		Production:         getBoolEnv("PRODUCTION", false),
@@ -49,7 +52,7 @@ func getEnv(key, fallback string) string {
 	if value, ok := os.LookupEnv(key); ok {
 		return value
 	}
-	log.Infof("%s not found in environment, defaulting to: %s", key, fallback)
+	slog.Info(fmt.Sprintf("%s not found in environment, defaulting to: %s", key, fallback))
 	return fallback
 }
 
@@ -57,6 +60,6 @@ func getBoolEnv(key string, fallback bool) bool {
 	if value := getEnv(key, ""); value != "" {
 		return value == "true"
 	}
-	log.Infof("%s not found in environment, defaulting to: %v", key, fallback)
+	slog.Info(fmt.Sprintf("%s not found in environment, defaulting to: %s", key, strconv.FormatBool(fallback)))
 	return fallback
 }
