@@ -8,9 +8,9 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
-	"github.com/tvgelderen/fiscora/auth"
-	"github.com/tvgelderen/fiscora/config"
-	"github.com/tvgelderen/fiscora/repository"
+	"github.com/tvgelderen/fiscora/internal/auth"
+	"github.com/tvgelderen/fiscora/internal/config"
+	"github.com/tvgelderen/fiscora/internal/repository"
 )
 
 func (h *Handler) HandleOAuthLogin(c echo.Context) error {

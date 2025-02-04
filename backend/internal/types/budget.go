@@ -4,7 +4,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/tvgelderen/fiscora/repository"
+	"github.com/tvgelderen/fiscora/internal/repository"
 )
 
 type BaseBudget struct {

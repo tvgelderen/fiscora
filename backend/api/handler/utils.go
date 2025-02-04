@@ -8,11 +8,12 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
-	"github.com/tvgelderen/fiscora/types"
+	"github.com/tvgelderen/fiscora/api/context"
+	"github.com/tvgelderen/fiscora/internal/types"
 )
 
 func getLogger(c echo.Context) *slog.Logger {
-	value := c.Get(LoggerCtxKey)
+	value := c.Get(context.LoggerCtxKey)
 	if value == nil {
 		return slog.Default()
 	}
@@ -27,7 +28,7 @@ func getLogger(c echo.Context) *slog.Logger {
 }
 
 func getUserId(c echo.Context) uuid.UUID {
-	return c.Get(UserIdCtxKey).(uuid.UUID)
+	return c.Get(context.UserIdCtxKey).(uuid.UUID)
 }
 
 func getMonth(c echo.Context) int {

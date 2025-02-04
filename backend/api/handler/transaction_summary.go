@@ -7,8 +7,8 @@ import (
 	"strconv"
 
 	"github.com/labstack/echo/v4"
-	"github.com/tvgelderen/fiscora/repository"
-	"github.com/tvgelderen/fiscora/types"
+	"github.com/tvgelderen/fiscora/internal/repository"
+	"github.com/tvgelderen/fiscora/internal/types"
 )
 
 func (h *Handler) HandleGetTransactionMonthInfo(c echo.Context) error {

@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo/v4"
-	"github.com/tvgelderen/fiscora/repository"
+	"github.com/tvgelderen/fiscora/internal/repository"
 )
 
 func (h *Handler) HandleGetTransactionIntervals(c echo.Context) error {

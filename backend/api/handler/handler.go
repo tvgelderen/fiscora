@@ -3,8 +3,8 @@ package handler
 import (
 	"database/sql"
 
-	"github.com/tvgelderen/fiscora/auth"
-	"github.com/tvgelderen/fiscora/repository"
+	"github.com/tvgelderen/fiscora/internal/auth"
+	"github.com/tvgelderen/fiscora/internal/repository"
 )
 
 type Handler struct {

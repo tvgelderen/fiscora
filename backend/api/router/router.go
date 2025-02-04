@@ -1,9 +1,8 @@
-package main
+package router
 
 import (
 	"database/sql"
 	"errors"
-	"fmt"
 	"log"
 	"log/slog"
 	"net/http"
@@ -11,35 +10,15 @@ import (
 	"github.com/labstack/echo-contrib/echoprometheus"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-
-	_ "github.com/lib/pq"
-
-	"github.com/tvgelderen/fiscora/auth"
-	"github.com/tvgelderen/fiscora/config"
-	"github.com/tvgelderen/fiscora/handler"
-	"github.com/tvgelderen/fiscora/logging"
-	"github.com/tvgelderen/fiscora/seed"
+	"github.com/tvgelderen/fiscora/api/context"
+	"github.com/tvgelderen/fiscora/api/handler"
+	customMiddleware "github.com/tvgelderen/fiscora/api/middleware"
+	"github.com/tvgelderen/fiscora/internal/auth"
+	"github.com/tvgelderen/fiscora/internal/config"
 )
 
-func main() {
-	logger, err := logging.SetupLogger()
-	if err != nil {
-		panic(fmt.Sprintf("Error setting up logger: %v", err.Error()))
-	}
-
-	slog.SetDefault(logger)
-
-	env := config.Env
-	if env.DBConnectionString == "" {
-		log.Fatalf("No database connection string found")
-	}
-
-	conn, err := sql.Open("postgres", env.DBConnectionString)
-	if err != nil {
-		log.Fatalf("Error establishing database connection: %s", err.Error())
-	}
-
-	seed.CheckSeed(conn)
+func New(conn *sql.DB) *echo.Echo {
+	logger := slog.Default()
 
 	authService := auth.NewAuthService()
 	h := handler.NewHandler(conn, authService)
@@ -48,7 +27,7 @@ func main() {
 
 	e.Use(middleware.CORSWithConfig(middleware.DefaultCORSConfig))
 
-	e.Use(handler.AttachLogger)
+	e.Use(customMiddleware.AttachLogger)
 	e.Use(middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
 		LogStatus:   true,
 		LogURI:      true,
@@ -57,7 +36,7 @@ func main() {
 		LogValuesFunc: func(c echo.Context, v middleware.RequestLoggerValues) error {
 			if v.Error == nil {
 				logger.LogAttrs(c.Request().Context(), slog.LevelInfo, "SUCCESS",
-					slog.String("request_id", c.Get(handler.RequestIdCtxKey).(string)),
+					slog.String("request_id", c.Get(context.RequestIdCtxKey).(string)),
 					slog.String("method", v.Method),
 					slog.String("uri", v.URI),
 					slog.Int("status", v.Status),
@@ -65,7 +44,7 @@ func main() {
 				)
 			} else {
 				logger.LogAttrs(c.Request().Context(), slog.LevelError, "ERROR",
-					slog.String("request_id", c.Get(handler.RequestIdCtxKey).(string)),
+					slog.String("request_id", c.Get(context.RequestIdCtxKey).(string)),
 					slog.String("remote_ip", v.RemoteIP),
 					slog.String("method", v.Method),
 					slog.String("uri", v.URI),
@@ -82,7 +61,7 @@ func main() {
 	go func() {
 		metrics := echo.New()
 		metrics.GET("/metrics", echoprometheus.NewHandler())
-		if err := metrics.Start(env.PrometheusPort); err != nil && !errors.Is(err, http.ErrServerClosed) {
+		if err := metrics.Start(config.Env.PrometheusPort); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			log.Fatal(err.Error())
 		}
 	}()
@@ -91,12 +70,12 @@ func main() {
 	base.GET("/auth/demo", h.HandleDemoLogin)
 	base.GET("/auth/:provider", h.HandleOAuthLogin)
 	base.GET("/auth/callback/:provider", h.HandleOAuthCallback)
-	base.GET("/auth/logout", h.HandleLogout, h.AuthorizeEndpoint)
+	base.GET("/auth/logout", h.HandleLogout, customMiddleware.AuthorizeEndpoint(h))
 
-	users := base.Group("/users", h.AuthorizeEndpoint)
+	users := base.Group("/users", customMiddleware.AuthorizeEndpoint(h))
 	users.GET("/me", h.HandleGetMe)
 
-	transactions := base.Group("/transactions", h.AuthorizeEndpoint)
+	transactions := base.Group("/transactions", customMiddleware.AuthorizeEndpoint(h))
 	transactions.GET("", h.HandleGetTransactions)
 	transactions.POST("", h.HandleCreateTransaction)
 	transactions.PUT("/:id", h.HandleUpdateTransaction)
@@ -111,7 +90,7 @@ func main() {
 	transactions.GET("/summary/year", h.HandleGetTransactionYearInfo)
 	transactions.GET("/summary/year/type", h.HandleGetTransactionsYearInfoPerType)
 
-	budgets := base.Group("/budgets", h.AuthorizeEndpoint)
+	budgets := base.Group("/budgets", customMiddleware.AuthorizeEndpoint(h))
 	budgets.GET("", h.HandleGetBudgets)
 	budgets.POST("", h.HandleCreateBudget)
 	budgets.GET("/:id", h.HandleGetBudget)
@@ -120,5 +99,5 @@ func main() {
 	budgets.DELETE("/:id/expenses/:expense_id", h.HandleDeleteBudgetExpense)
 	budgets.POST("/:id/expenses/:expense_id/transactions", h.HandleAddBudgetTransactions)
 
-	e.Logger.Fatal(e.Start(env.Port))
+	return e
 }

@@ -1,25 +1,28 @@
 include .env
 
 build:
-	@go build -o bin/main
+	@go build -o ./bin/main ./cmd/api/main.go
 
 run: build
 	@./bin/main
 
-seed: build
-	@./bin/main -seed
+build-seed:
+	@go build -o bin/seed ./cmd/seed/main.go
 
-seed-me: build
-	@./bin/main -seed-me
+seed: build-seed
+	@./bin/seed -seed
+
+seed-me: build-seed
+	@./bin/seed -seed-me
 
 create-migration:
-	@GOOSE_MIGRATION_DIR=./database/migrations goose postgres ${DB_MIGRATION_STRING} create $(name) sql
+	@GOOSE_MIGRATION_DIR=./internal/database/migrations goose postgres ${DB_MIGRATION_STRING} create $(name) sql
 
 migrate:
-	@GOOSE_MIGRATION_DIR=./database/migrations goose postgres ${DB_MIGRATION_STRING} up
+	@GOOSE_MIGRATION_DIR=./internal/database/migrations goose postgres ${DB_MIGRATION_STRING} up
 
 migrate-down:
-	@GOOSE_MIGRATION_DIR=./database/migrations goose postgres ${DB_MIGRATION_STRING} down
+	@GOOSE_MIGRATION_DIR=./internal/database/migrations goose postgres ${DB_MIGRATION_STRING} down
 
 redo:
-	@GOOSE_MIGRATION_DIR=./database/migrations goose postgres ${DB_MIGRATION_STRING} redo
+	@GOOSE_MIGRATION_DIR=./internal/database/migrations goose postgres ${DB_MIGRATION_STRING} redo

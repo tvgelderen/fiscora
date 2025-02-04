@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/tvgelderen/fiscora/config"
+	"github.com/tvgelderen/fiscora/internal/config"
 )
 
 type RotatingFileHandler struct {

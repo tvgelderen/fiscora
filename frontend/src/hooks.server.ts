@@ -12,20 +12,21 @@ export const handle: Handle = async ({ event, resolve }) => {
 
 	try {
 		const response = await authorizeFetch("users/me", accessToken);
-		if (response.ok) {
-			const user = (await response.json()) as User;
-			user.isDemo = user.username === "demo";
-			event.locals.user = user;
+		if (!response.ok) {
+			throw Error(`Backend responded with ${response.status}`);
+		}
 
-			if (user.username === "demo" && event.request.method !== "GET") {
-				return new Response(null, {
-					status: 401,
-				});
-			}
+		const user = (await response.json()) as User;
+		user.isDemo = user.username === "demo";
+		event.locals.user = user;
+
+		if (user.username === "demo" && event.request.method !== "GET") {
+			return new Response(null, {
+				status: 401,
+			});
 		}
 	} catch (err) {
 		console.error(err);
-
 		event.locals.session = null;
 		event.locals.user = null;
 	}

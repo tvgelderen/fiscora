@@ -6,13 +6,14 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
-	"github.com/tvgelderen/fiscora/repository"
-	"github.com/tvgelderen/fiscora/types"
+	"github.com/tvgelderen/fiscora/api/context"
+	"github.com/tvgelderen/fiscora/internal/repository"
+	"github.com/tvgelderen/fiscora/internal/types"
 )
 
 func (h *Handler) HandleGetMe(c echo.Context) error {
 	logger := getLogger(c)
-	id := c.Get(UserIdCtxKey)
+	id := c.Get(context.UserIdCtxKey)
 	if id == nil {
 		return c.String(http.StatusBadRequest, "User id missing from request context")
 	}

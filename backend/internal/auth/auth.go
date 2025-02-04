@@ -1,7 +1,7 @@
 package auth
 
 import (
-	"github.com/tvgelderen/fiscora/config"
+	"github.com/tvgelderen/fiscora/internal/config"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 )

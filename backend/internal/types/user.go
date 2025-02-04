@@ -1,6 +1,6 @@
 package types
 
-import "github.com/tvgelderen/fiscora/repository"
+import "github.com/tvgelderen/fiscora/internal/repository"
 
 type User struct {
 	Email    string `json:"email"`
