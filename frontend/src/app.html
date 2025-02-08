@@ -3,18 +3,28 @@
 
 <head>
     <meta charset="utf-8" />
-    <link rel="icon" href="%sveltekit.assets%/favicon.png" />
+
+    <link id="favicon-light" rel="icon" href="%sveltekit.assets%/favicon_light.ico"
+        media="(prefers-color-scheme: light)" />
+    <link id="favicon-dark" rel="icon" href="%sveltekit.assets%/favicon_dark.ico"
+        media="(prefers-color-scheme: dark)" />
+
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content="
 		Fiscora helps you track your income, expenses, and savings all in
 		one place. Gain valuable insights, set goals, and make smarter financial
 		decisions.
     " />
+
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter&display=swap" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&display=swap" rel="stylesheet" />
+
     <title>Fiscora</title>
+
+    %sveltekit.head%
+
     <script>
         let dark = true;
         const theme = localStorage.getItem("theme");
@@ -34,7 +44,6 @@
 
         html.classList.value = dark ? "dark" : "light";
     </script>
-    %sveltekit.head%
 </head>
 
 <body data-sveltekit-preload-data="hover" class="relative min-h-dvh">
